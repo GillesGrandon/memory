@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <link href="memory.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <script>
+        var nbImg = 16;
+        var imgWidth = 10;
+        var imgHeight = 10;
+        var imgSpacing = 10;
+        var tabImgSrc = [];
+        var nbCols = 2;
+        var nbRows = 2;
+        var tabToggleObjects = [];
+
+        var firstToggleImgSrc = '';
+        var firstToggleDivId = '';
+
+
+
+        var previousToogleDivId = '';
+        var currentToogleDivId = '';
+        var clickOnToggleCount = 0;
+        var resetTimeout;
+        var nbImgFound = 0;
+        var isStartTimer = true;
+        var unlock = true;
+
+
+        function initImgSrc() {
+            var a = 1
+            for (var i = 0; i < nbImg; i++) {
+                tabImgSrc[i] = "img/img" + a + ".jpg";
+                if ((i + 1) % 2 == 0) a++;
+            }
+            console.log('tabImgSrc :' + tabImgSrc.length);
+        }
+
+        function getRandomImgSrc() {
+            var start = Math.floor(Math.random() * tabImgSrc.length)
+            return tabImgSrc.splice(start, 1);
+        }
+
+
+        function initImgSize() {
+            imgWidth = $('#imgSize').width();
+            imgHeight = $('#imgSize').height();
+        }
+
+
+        function initImgPosition() {
+            // si un nombre impair
+            if (nbImg % 2 != 0) nbImg -= 1;
+            var cols = 2;
+            var rows = 2;
+
+            while (rows < nbImg) {
+                var multi = rows * cols;
+                if (multi > nbImg) {
+                    rows++;
+                    cols = 2;
+                }
+                if (multi === nbImg && cols >= rows) {
+                    nbRows = rows;
+                    nbCols = cols
+                }
+                cols++;
+            }
+        }
+
+        function displayImg() {
+
+            var left = 0;
+            var top = 0;
+            var nbImgTmp = nbImg + 1;
+
+            containerSizeString = "width : " + imgWidth + "px; height : " + imgHeight + "px;"
+                // placer les images
+            for (var i = 1; i < nbImgTmp; i++) {
+
+                containerPositionString = "top:" + top + "px ; left:" + left + "px;"
+
+
+                var divContainer = document.createElement("div");
+                divContainer.setAttribute("id", "container_" + i);
+                divContainer.setAttribute("class", "container");
+                divContainer.setAttribute("style", containerPositionString + containerSizeString);
+
+
+                var divToggle = document.createElement("div");
+                divToggle.setAttribute("id", "toggle_" + i);
+                divToggle.setAttribute("class", "toggle");
+                divToggle.setAttribute("style", containerSizeString);
+
+                divToggle.addEventListener('click', userPlaying);
+
+                tabToggleObjects.push(divToggle);
+
+
+                var img = document.createElement("img");
+                img.setAttribute("src", getRandomImgSrc());
+
+                divContainer.appendChild(divToggle);
+                divContainer.appendChild(img);
+
+                $('div#table').append(divContainer);
+
+                left += imgWidth + imgSpacing;
+                if (i % nbCols == 0) {
+                    top += imgHeight + imgSpacing;
+                    left = 0;
+                }
+            }
+        }
+
+        function resetTry() {
+            console.log('RESET');
+            clickOnToggleCount = 0;
+            unlock = true;
+            clearTimeout(resetTimeout);
+        }
+
+        function openToggle(toggleId) {
+            console.log('open toggle : ' + toggleId);
+            $(toggleId).animate({
+                height: '0px',
+                opacity: 0.3
+            }, 700);
+        }
+
+
+        function CloseToggle(toggleId) {
+            console.log('close toggle : ' + toggleId);
+            $(toggleId).animate({
+                height: imgHeight + 'px',
+                opacity: 1
+            }, 700);
+
+        }
+
+        function detachAllListener() {
+            console.log('------------- detach -----------------');
+            for (var f = 0; f < tabToggleObjects.length; f++) {
+                console.log('boucle ' + tabToggleObjects.length);
+
+                // tabToggleObjects[f].removeEventListener('click', userPlaying(event));
+                tabToggleObjects[f].removeEventListener('click', userPlaying);
+            }
+        }
+
+        function attachAllListener() {
+            console.log('------------- attach -----------------');
+            for (var f = 0; f < tabToggleObjects.length; f++) {
+                console.log('boucle ' + tabToggleObjects.length);
+
+                // tabToggleObjects[f].removeEventListener('click', userPlaying(event));
+                tabToggleObjects[f].addEventListener('click', userPlaying);
+            }
+        }
+
+
+
+        userPlaying = function(event) {
+            if (isStartTimer) {
+                startTimer();
+                console.log('startTimer');
+                isStartTimer = !isStartTimer;
+            }
+
+            detachAllListener();
+
+
+            clickOnToggleCount++;
+            unlock = false;
+            console.log('enter clickOnToggleCount : ' + clickOnToggleCount);
+            console.log('enter unlock : ' + unlock);
+            currentToogleDivId = '#' + event.target.id;
+            console.log('enter currentToogleDivId : ' + currentToogleDivId);
+            console.log('enter previousToogleDivId : ' + previousToogleDivId);
+
+            // au premier clic
+            if (clickOnToggleCount == 1) {
+                console.log('click = 1 clickOnToggleCount : ' + clickOnToggleCount);
+                previousToogleDivId = currentToogleDivId;
+                firstToggleImgSrc = event.target.parentElement.lastChild.src;
+                console.log('click = 1 img stocker : ' + firstToggleImgSrc);
+                firstToggleDivId = currentToogleDivId;
+                console.log('click = 1 open toggle 1');
+                openToggle(currentToogleDivId);
+
+            }
+
+            // au deuxieme clic
+            if (clickOnToggleCount == 2) {
+                console.log('click = 2 ' + clickOnToggleCount);
+                // if double click on toggle
+                if (previousToogleDivId === currentToogleDivId) {
+                    clickOnToggleCount--;
+                    console.log('click = 2 click sur le meme element : return : clickOnToggleCount : ' + clickOnToggleCount);
+                    unlock = true;
+                    setTimeout(
+                        attachAllListener,
+                        1000
+                    );
+                    return;
+                }
+
+                openToggle(currentToogleDivId);
+
+                console.log('click = 2 compare');
+                var secondToggleImgSrc = event.target.parentElement.lastChild.src;
+
+                // same image
+                if (firstToggleImgSrc == secondToggleImgSrc) {
+                    console.log('click = 2 les img sont identiques');
+                    // compter les images trouvées
+                    nbImgFound += 2;
+                    //todo fin de partie
+                } else {
+                    // close all toggle
+                    console.log('click = 2 les img ne sont pas identiques');
+                    console.log('clik = 2 close all toggle');
+
+                    CloseToggle(currentToogleDivId),
+                        CloseToggle(firstToggleDivId);
+
+                }
+
+                resetTimeout = setTimeout(
+                    resetTry(), 2000
+                );
+
+            }
+
+            unlock = true;
+
+            console.log('unlock final , clickOnToggleCount : ' + clickOnToggleCount);
+            setTimeout(
+                attachAllListener,
+                1000
+            );
+        }
+
+        function startTimer() {
+
+            const departMinutes = 0
+            let temps = departMinutes * 60
+
+            const timerElement = $('div#timer');
+
+            setInterval(() => {
+                $('div#timer').empty();
+                let minutes = parseInt(temps / 60, 10)
+                let secondes = parseInt(temps % 60, 10)
+
+                minutes = minutes < 10 ? "0" + minutes : minutes
+                secondes = secondes < 10 ? "0" + secondes : secondes
+
+                var minuteNode = document.createElement('div');
+                minuteNode.setAttribute('id', 'minutes')
+                var textMinute = document.createTextNode(minutes);
+                minuteNode.appendChild(textMinute);
+
+
+
+                var secondNode = document.createElement('div');
+                secondNode.setAttribute('id', 'seconds')
+                var textSecond = document.createTextNode(secondes);
+                minuteNode.appendChild(textSecond);
+
+                $('div#timer').append(minuteNode);
+                $('div#timer').append(secondNode);
+                temps++;
+            }, 1000)
+
+        }
+
+
+
+
+
+        function startGame() {
+            resetTry();
+            removeAllNode();
+            initImgSize();
+            initImgSrc();
+            initImgPosition();
+            displayImg();
+        }
+
+
+        function removeAllNode() {
+            $('div#table').empty();
+        }
+
+
+        $(document).ready(function() {
+            startGame();
+        })
+    </script>
+</head>
+
+<body>
+    <img src="img/img1.jpg" id="imgSize">
+    <div id="timer"></div>
+    <div id="table"></div>
+
+
+
+</body>
+
+</html>
