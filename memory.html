@@ -11,23 +11,15 @@
         var imgWidth = 10;
         var imgHeight = 10;
         var imgSpacing = 10;
-        var tabImgSrc = [];
         var nbCols = 2;
         var nbRows = 2;
-        var tabToggleObjects = [];
-
-        var firstToggleImgSrc = '';
-        var firstToggleDivId = '';
-
-
-
-        var previousToogleDivId = '';
-        var currentToogleDivId = '';
         var clickOnToggleCount = 0;
-        var resetTimeout;
         var nbImgFound = 0;
-        var isStartTimer = true;
+        var previousToogleDivId = '';
+        var currentToggleDivId = '';
         var unlock = true;
+
+
 
 
         function initImgSrc() {
@@ -95,9 +87,14 @@
                 divToggle.setAttribute("class", "toggle");
                 divToggle.setAttribute("style", containerSizeString);
 
-                divToggle.addEventListener('click', userPlaying);
+                divToggle.addEventListener('dblclick', event => {
+                    console.log("------ dblclick prevent default ------")
+                    event.preventDefault();
+                })
 
-                tabToggleObjects.push(divToggle);
+                divToggle.addEventListener('click', event => {
+                    processControle(event);
+                })
 
 
                 var img = document.createElement("img");
@@ -114,13 +111,6 @@
                     left = 0;
                 }
             }
-        }
-
-        function resetTry() {
-            console.log('RESET');
-            clickOnToggleCount = 0;
-            unlock = true;
-            clearTimeout(resetTimeout);
         }
 
         function openToggle(toggleId) {
@@ -141,74 +131,65 @@
 
         }
 
-        function detachAllListener() {
-            console.log('------------- detach -----------------');
-            for (var f = 0; f < tabToggleObjects.length; f++) {
-                console.log('boucle ' + tabToggleObjects.length);
+        function resetTry(isCloseToggle) {
+            console.log('RESET ENTER clickOnToggleCount : ' + clickOnToggleCount);
 
-                // tabToggleObjects[f].removeEventListener('click', userPlaying(event));
-                tabToggleObjects[f].removeEventListener('click', userPlaying);
+            if (isCloseToggle) {
+                CloseToggle(currentToggleDivId);
+                CloseToggle(previousToogleDivId);
             }
-        }
-
-        function attachAllListener() {
-            console.log('------------- attach -----------------');
-            for (var f = 0; f < tabToggleObjects.length; f++) {
-                console.log('boucle ' + tabToggleObjects.length);
-
-                // tabToggleObjects[f].removeEventListener('click', userPlaying(event));
-                tabToggleObjects[f].addEventListener('click', userPlaying);
-            }
+            clickOnToggleCount = 0;
+            unlock = true;
+            currentToggleDivId = '';
+            previousToogleDivId = ''
+            console.log('RESET clickOnToggleCount : ' + clickOnToggleCount);
         }
 
 
-
-        userPlaying = function(event) {
-            if (isStartTimer) {
-                startTimer();
-                console.log('startTimer');
-                isStartTimer = !isStartTimer;
+        function processControle(event) {
+            console.log('PROCESS CONTROL clickOnToggleCount : ' + clickOnToggleCount);
+            if (clickOnToggleCount < 2 && unlock) {
+                userPlaying(event);
             }
+        }
 
-            detachAllListener();
 
+        function userPlaying(event) {
+
+            var toggleId = '#' + event.target.id;
 
             clickOnToggleCount++;
-            unlock = false;
-            console.log('enter clickOnToggleCount : ' + clickOnToggleCount);
-            console.log('enter unlock : ' + unlock);
-            currentToogleDivId = '#' + event.target.id;
-            console.log('enter currentToogleDivId : ' + currentToogleDivId);
-            console.log('enter previousToogleDivId : ' + previousToogleDivId);
+            currentToggleDivId = '#' + event.target.id;
+
+            console.log('--> userPlaying clickOnToggleCount : ' + clickOnToggleCount);
+            console.log('--> userPlaying currentToogleDivId : ' + currentToggleDivId);
+            console.log('--> userPlaying previousToogleDivId : ' + previousToogleDivId);
+
+
+            // double click sur le meme element
+            if (previousToogleDivId === currentToggleDivId &&
+                previousToogleDivId != '' && currentToggleDivId != '') {
+                clickOnToggleCount--;
+                console.log("DOUBLE CLICK return clickOnToggleCount : " + clickOnToggleCount);
+                unlock = true;
+                return;
+            }
 
             // au premier clic
             if (clickOnToggleCount == 1) {
                 console.log('click = 1 clickOnToggleCount : ' + clickOnToggleCount);
-                previousToogleDivId = currentToogleDivId;
+                previousToogleDivId = currentToggleDivId;
                 firstToggleImgSrc = event.target.parentElement.lastChild.src;
-                console.log('click = 1 img stocker : ' + firstToggleImgSrc);
-                firstToggleDivId = currentToogleDivId;
-                console.log('click = 1 open toggle 1');
-                openToggle(currentToogleDivId);
+                // console.log('click = 1 open toggle 1');
+                openToggle(currentToggleDivId);
+                unlock = true;
 
             }
-
-            // au deuxieme clic
             if (clickOnToggleCount == 2) {
-                console.log('click = 2 ' + clickOnToggleCount);
-                // if double click on toggle
-                if (previousToogleDivId === currentToogleDivId) {
-                    clickOnToggleCount--;
-                    console.log('click = 2 click sur le meme element : return : clickOnToggleCount : ' + clickOnToggleCount);
-                    unlock = true;
-                    setTimeout(
-                        attachAllListener,
-                        1000
-                    );
-                    return;
-                }
 
-                openToggle(currentToogleDivId);
+                console.log('click = 2 ' + clickOnToggleCount);
+
+                openToggle(currentToggleDivId);
 
                 console.log('click = 2 compare');
                 var secondToggleImgSrc = event.target.parentElement.lastChild.src;
@@ -217,31 +198,26 @@
                 if (firstToggleImgSrc == secondToggleImgSrc) {
                     console.log('click = 2 les img sont identiques');
                     // compter les images trouvées
+                    setTimeout(function() {
+                        resetTry(false)
+                    }, 1000)
                     nbImgFound += 2;
                     //todo fin de partie
+
                 } else {
                     // close all toggle
                     console.log('click = 2 les img ne sont pas identiques');
-                    console.log('clik = 2 close all toggle');
+                    console.log('click = 2 close all toggle');
 
-                    CloseToggle(currentToogleDivId),
-                        CloseToggle(firstToggleDivId);
-
+                    setTimeout(function() {
+                            resetTry(true)
+                        },
+                        1000
+                    );
                 }
-
-                resetTimeout = setTimeout(
-                    resetTry(), 2000
-                );
 
             }
 
-            unlock = true;
-
-            console.log('unlock final , clickOnToggleCount : ' + clickOnToggleCount);
-            setTimeout(
-                attachAllListener,
-                1000
-            );
         }
 
         function startTimer() {
@@ -277,10 +253,6 @@
             }, 1000)
 
         }
-
-
-
-
 
         function startGame() {
             resetTry();
