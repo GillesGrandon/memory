@@ -1,8 +1,15 @@
+body {
+    width: 50vw;
+    background-color: lightgray;
+}
+
 #table {
     position: absolute;
     width: 236px;
     height: 220px;
-    left: 40%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 #imgSize {
@@ -17,6 +24,7 @@
     position: absolute;
     background-color: blue;
     z-index: 2;
+    box-shadow: 3px 2px 2px black;
 }
 
 img {
